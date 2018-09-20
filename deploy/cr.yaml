@@ -1,0 +1,8 @@
+apiVersion: "galera.database.coreos.com/v1alpha1"
+kind: "GaleraService"
+metadata:
+  name: "example"
+spec:
+  mariadb_version: "0.9.1-0"
+  mariadb_configmap_name: "example-config"
+  mariadb_client_port_num: 3306

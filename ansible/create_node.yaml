@@ -1,0 +1,229 @@
+- debug: 
+    msg: "CREATING GALERA NODE {{galera_node_name}}"
+
+- block:
+  - name: "lookup k8s service for {{galera_node_name}}"
+    set_fact:
+      node_service_status: "{{ lookup('k8s', api_version='v1', kind='Service', namespace=namespace, resource_name=galera_node_name+'-service') }}"
+  rescue:
+  - name: set node_service_status to default on failure
+    set_fact:
+      node_service_status: []
+
+- name: "CREATE SERVICES FOR GALERA NODE {{galera_node_name}}"
+  k8s:
+    definition:
+      apiVersion: v1
+      kind: Service
+      metadata:
+        name: "{{ galera_node_name }}-service"
+        namespace: "{{ namespace }}"
+        labels:
+          app: "{{ galera_app_name }}"
+          galera_cluster: "{{ galera_cluster_name }}"
+      spec:
+        selector:
+          pod_name: "{{ galera_node_name }}"
+        ports:
+        - name: mysql
+          protocol: TCP
+          port: 3306
+        - name: wsrep
+          protocol: TCP
+          port: 4567
+        - name: wsrep-udp
+          protocol: UDP
+          port: 4567
+        - name: sst
+          protocol: TCP
+          port: 4444
+        - name: ist
+          protocol: TCP
+          port: 4568
+  when: not node_service_status
+  register: service_result
+
+- name: "refresh node_service_status for {{galera_node_name}}"
+  set_fact:
+    node_service_status: "{{ lookup('k8s', api_version='v1', kind='Service', namespace=namespace, resource_name=galera_node_name+'-service') }}"
+  when: service_result|changed
+
+- debug:
+    var: node_service_status
+
+- block:
+  - name: "lookup ConfigMap for {{galera_node_name}}"
+    set_fact:
+      node_configmap_status: "{{ lookup('k8s', api_version='v1', kind='ConfigMap', namespace=namespace, resource_name=galera_configmap_name+'-'+galera_node_name) }}"
+  rescue:
+  - name: set configmap_status to default
+    set_fact:
+      node_configmap_status: []
+
+- name: "CREATE CONFIGMAP FOR GALERA {{galera_node_name}}"
+  k8s:
+    definition:
+      apiVersion: v1
+      kind: ConfigMap
+      metadata:
+        name: "{{ galera_configmap_name }}-{{galera_node_name}}"
+        namespace: "{{ namespace }}"
+        labels:
+          app: "{{ galera_app_name }}"
+          galera_cluster: "{{ galera_cluster_name }}"
+      data:
+        mysql-cnf-general: |
+          [mysqld]
+          datadir=/var/lib/mysql
+          socket=/var/lib/mysql/mysql.sock
+          user=mysql
+          binlog_format=ROW
+          bind-address=0.0.0.0
+          default_storage_engine=innodb
+          innodb_autoinc_lock_mode=2
+          innodb_flush_log_at_trx_commit=0
+          innodb_buffer_pool_size=122M
+          wsrep_on=ON
+          wsrep_provider=/usr/lib/libgalera_smm.so
+          wsrep_provider_options="gcache.size=300M; gcache.page_size=300M;{% if not do_bootstrap %} pc.bootstrap=0;{% endif %}"
+          wsrep_cluster_name="{{galera_cluster_name}}"
+          wsrep_cluster_address="gcomm://{{node_list|join(',')}}"
+          wsrep_node_name={{galera_node_name + '-service'}}
+          wsrep_sst_method=rsync
+          #{% if not do_bootstrap %}wsrep_sst_donor={{galera_nodes[0] + '-service'}}{% endif %}
+          [mysql_safe]
+          log-error=/var/log/mysqld.log
+          pid-file=/var/run/mysqld/mysqld.pid
+  register: configmap_result
+  when: not node_configmap_status
+
+- name: "lookup ConfigMap for {{galera_node_name}}"
+  set_fact:
+    node_configmap_status: "{{ lookup('k8s', api_version='v1', kind='ConfigMap', namespace=namespace, resource_name=galera_configmap_name+'-'+galera_node_name) }}"
+  when: configmap_result|changed
+
+- debug:
+    var: node_configmap_status
+
+- block:
+  - name: "lookup PVC for {{galera_node_name}}"
+    set_fact:
+      node_pvc_status: "{{ lookup('k8s', api_version='v1', kind='PersistentVolumeClaim', namespace=namespace, resource_name=galera_node_name+'-mysql-data') }}"
+  rescue:
+  - name: set node_pvc_status to default on failure
+    set_fact:
+      node_pvc_status: []
+
+- name: "CREATE PVC FOR GALERA NODE {{galera_node_name}}"
+  k8s:
+    definition:
+      kind: PersistentVolumeClaim
+      apiVersion: v1
+      metadata:
+        name: "{{ galera_node_name + '-mysql-data' }}"
+        namespace: "{{ namespace }}"
+        labels:
+          pod_name: "{{ galera_node_name }}"
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        volumeMode: Filesystem
+        resources:
+          requests:
+            storage: 2Gi
+        #storageClassName: slow
+        selector:
+          matchLabels:
+            name: "{{persistent_volume}}"
+  register: pvc_result
+  when: not node_pvc_status
+
+- name: "lookup PVC for {{galera_node_name}}"
+  set_fact:
+    node_pvc_status: "{{ lookup('k8s', api_version='v1', kind='PersistentVolumeClaim', namespace=namespace, resource_name=galera_node_name+'-mysql-data') }}"
+  when: pvc_result|changed
+
+- block:
+  - name: "lookup Pod for {{galera_node_name}}"
+    set_fact:
+      node_pod_status: "{{ lookup('k8s', api_version='v1', kind='Pod', namespace=namespace, resource_name=galera_node_name) }}"
+  rescue:
+  - name: set node_pod_status to default on failure
+    set_fact:
+      node_pod_status: []
+
+- name: "CREATE POD FOR GALERA NODE {{galera_node_name}}"
+  k8s:
+    definition:
+      kind: Pod
+      apiVersion: v1
+      metadata:
+        name: "{{ galera_node_name }}"
+        namespace: "{{ namespace }}"
+        labels:
+          pod_name: "{{ galera_node_name }}"
+      spec:
+        selector:
+          matchLabels:
+            app: "{{ galera_app_name }}"
+        limits:
+        - default:
+            memory: 1Gi
+          defaultRequest:
+            memory: 1Gi
+        containers:
+        - name: "{{ galera_node_name }}"
+          image: "mariadb:10.3.9"
+          args: "{% if do_bootstrap|default(False)|bool %}['--wsrep-new-cluster']{% else %}[]{% endif %}"
+          restartPolicy: "Never"
+          ports:
+          - name: mysqld
+            containerPort: 3306
+          - name: wsrep
+            containerPort: 4567
+          - name: sst
+            containerPort: 4444
+          - name: ist
+            containerPort: 4568
+          env:
+          - name: MYSQL_ALLOW_EMPTY_PASSWORD
+            value: "yes"
+          volumeMounts:
+          - name: mysql-cnf-mount
+            mountPath: "/etc/mysql"
+          - name: mysql-data-mount
+            mountPath: "/var/lib/mysql"
+        volumes:
+        - name: mysql-cnf-mount
+          configMap:
+            name: "{{ galera_configmap_name }}-{{ galera_node_name }}"
+            items:
+            - key: "mysql-cnf-general"
+              path: "my.cnf"
+        - name: mysql-data-mount
+          persistentVolumeClaim:
+            claimName: "{{ galera_node_name + '-mysql-data' }}"
+
+  register: pod_result
+  when: not node_pod_status
+
+- name: "lookup Pod for {{galera_node_name}}"
+  set_fact:
+    node_pod_status: "{{ lookup('k8s', api_version='v1', kind='Pod', namespace=namespace, resource_name=galera_node_name) }}"
+  when: pod_result|changed
+
+- debug:
+    var: node_pod_status
+
+- name: Wait for mysqld and galera ports to be available before proceeding
+  wait_for:
+    host: "{{node_service_status.spec.clusterIP}}"
+    port: "{{item|int}}"
+    sleep: 1
+    timeout: 300
+  loop: [3306, 4567] #4568/4444?
+
+#- name: Wait for primary component to be up before proceeding
+#  pause:
+#    seconds: 60
+#  when: do_bootstrap|bool and pod_result|changed

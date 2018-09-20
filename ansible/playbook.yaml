@@ -1,0 +1,29 @@
+- hosts: localhost
+  vars:
+    namespace: "default"
+    persistent_volume: "pv001"
+    galera_cluster_name: "galera"
+    galera_app_name: "galera-app"
+    galera_configmap_name: "galera-configmap"
+    galera_cluster_size: 3
+    galera_nodes:
+    - galera-node-0001
+    - galera-node-0002
+    - galera-node-0003
+  tasks:
+  - debug: msg="Running Galera Ansible Operator Playbook 0002"
+
+  - set_fact:
+      node_list: []
+  - set_fact:
+      node_list: "{{node_list}} + [ '{{item}}' + '-service' ]"
+    loop: "{{galera_nodes}}"
+
+  - include_role:
+      name: get_status
+
+  - include_tasks: create_node.yaml
+    args:
+      galera_node_name: "{{item}}"
+      do_bootstrap: "{% if item == galera_nodes[0] %}True{% else %}False{% endif %}"
+    loop: "{{galera_nodes}}"
