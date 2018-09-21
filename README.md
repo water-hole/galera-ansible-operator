@@ -5,6 +5,8 @@ WIP, not ready for general consumption.
 1. Fix cleanup to remove all resources created for each pod.
 1. Enhance pods
    * Add readiness checks.
+1. Add more checks for variable changes:
+   * mariadb_version change to upgrade pods.
 1. Make more things configurable:
    * PV size requested
    * my.cnf options?
