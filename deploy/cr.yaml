@@ -3,6 +3,10 @@ kind: "GaleraService"
 metadata:
   name: "example"
 spec:
-  mariadb_version: "0.9.1-0"
-  mariadb_configmap_name: "example-config"
-  mariadb_client_port_num: 3306
+  galera_app_name: "galera-app"
+  galera_cluster_name: "galera"
+  galera_cluster_size: 1
+  galera_configmap_name: "galera-configmap"
+  mariadb_version: "10.3.9"
+  namespace: "default"
+  persistent_volume: "pv001"

@@ -1,0 +1,20 @@
+- debug:
+    msg: "REMOVING NODE {{remove_pod_idx}}"
+
+- set_fact:
+    the_pod: "{{pods_lookup[remove_pod_idx|int-1]}}"
+
+- name: "REMOVING NODE {{the_pod.metadata.name}}"
+  k8s:
+    state: absent
+    definition:
+      kind: Pod
+      apiVersion: v1
+      metadata:
+        name: "{{ the_pod.metadata.name }}"
+        namespace: "{{ namespace }}"
+        labels:
+          pod_name: "{{ the_pod.metadata.name }}"
+          app: "{{ galera_app_name }}"
+          galera_cluster: "{{ galera_cluster_name }}"
+

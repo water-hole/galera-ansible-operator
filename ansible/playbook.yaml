@@ -1,17 +1,19 @@
 - hosts: localhost
-  vars:
-    namespace: "default"
-    persistent_volume: "pv001"
-    galera_cluster_name: "galera"
-    galera_app_name: "galera-app"
-    galera_configmap_name: "galera-configmap"
-    galera_cluster_size: 3
-    galera_nodes:
-    - galera-node-0001
-    - galera-node-0002
-    - galera-node-0003
+  gather_facts: no
   tasks:
   - debug: msg="Running Galera Ansible Operator Playbook 0002"
+
+  # The cluster size is set via an external variable which comes from the CR
+  # spec. Because of this, we need to create a new variable for internal use
+  # which has a lower scope so we can override it.
+  - set_fact:
+      _p_galera_cluster_size: "{% if galera_cluster_size|int > 0 %}{{galera_cluster_size}}{% else %}1{% endif %}"
+
+  - set_fact:
+      galera_nodes: []
+  - set_fact:
+      galera_nodes: "{{ galera_nodes }} + [ '{{ \"galera-node-%04d\"|format(item|int) }}' ]"
+    with_sequence: "start=1 end={{_p_galera_cluster_size}}"
 
   - set_fact:
       node_list: []
@@ -22,8 +24,21 @@
   - include_role:
       name: get_status
 
+  # variables used when resizing the cluster
+  - set_fact:
+      cluster_size_changing: "{% if _p_galera_cluster_size != pods_lookup|length %}True{% else %}False{% endif %}"
+  - debug:
+      var: cluster_size_changing
+  - set_fact:
+      removing_nodes: "{% if _p_galera_cluster_size < pods_lookup|length %}True{% else %}False{% endif %}"
+  - debug:
+      var: removing_nodes
+
   - include_tasks: create_node.yaml
     args:
       galera_node_name: "{{item}}"
       do_bootstrap: "{% if item == galera_nodes[0] %}True{% else %}False{% endif %}"
     loop: "{{galera_nodes}}"
+
+  - include_tasks: cleanup_nodes.yaml
+    when: removing_nodes

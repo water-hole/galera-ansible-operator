@@ -130,8 +130,7 @@
         volumeMode: Filesystem
         resources:
           requests:
-            storage: 2Gi
-        #storageClassName: slow
+            storage: 1Gi
         selector:
           matchLabels:
             name: "{{persistent_volume}}"
@@ -162,6 +161,8 @@
         namespace: "{{ namespace }}"
         labels:
           pod_name: "{{ galera_node_name }}"
+          app: "{{ galera_app_name }}"
+          galera_cluster: "{{ galera_cluster_name }}"
       spec:
         selector:
           matchLabels:
@@ -221,9 +222,5 @@
     port: "{{item|int}}"
     sleep: 1
     timeout: 300
-  loop: [3306, 4567] #4568/4444?
+  loop: [3306, 4567]
 
-#- name: Wait for primary component to be up before proceeding
-#  pause:
-#    seconds: 60
-#  when: do_bootstrap|bool and pod_result|changed
