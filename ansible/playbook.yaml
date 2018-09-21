@@ -26,11 +26,11 @@
 
   # variables used when resizing the cluster
   - set_fact:
-      cluster_size_changing: "{% if _p_galera_cluster_size != pods_lookup|length %}True{% else %}False{% endif %}"
+      cluster_size_changing: "{% if _p_galera_cluster_size|int != pods_lookup|length %}True{% else %}False{% endif %}"
   - debug:
       var: cluster_size_changing
   - set_fact:
-      removing_nodes: "{% if _p_galera_cluster_size < pods_lookup|length %}True{% else %}False{% endif %}"
+      removing_nodes: "{% if _p_galera_cluster_size|int < pods_lookup|length %}True{% else %}False{% endif %}"
   - debug:
       var: removing_nodes
 
@@ -39,6 +39,11 @@
       galera_node_name: "{{item}}"
       do_bootstrap: "{% if item == galera_nodes[0] %}True{% else %}False{% endif %}"
     loop: "{{galera_nodes}}"
+
+  - debug:
+      msg: "CURRENT NODES: {{pods_lookup|length}}"
+  - debug:
+       msg: "REQUESTED CLUSTER SIZE: {{_p_galera_cluster_size|int}}"
 
   - include_tasks: cleanup_nodes.yaml
     when: removing_nodes

@@ -1,20 +1,46 @@
-- debug:
-    msg: "REMOVING NODE {{remove_pod_idx}}"
-
 - set_fact:
-    the_pod: "{{pods_lookup[remove_pod_idx|int-1]}}"
+    removed_pod: "{{pods_lookup[remove_pod_idx|int-1]}}"
 
-- name: "REMOVING NODE {{the_pod.metadata.name}}"
+- debug:
+    msg: "REMOVING NODE {{removed_pod.metadata.name}}"
+
+- name: "REMOVING POD FOR GALERA NODE {{removed_pod.metadata.name}}"
   k8s:
     state: absent
     definition:
       kind: Pod
       apiVersion: v1
       metadata:
-        name: "{{ the_pod.metadata.name }}"
+        name: "{{ removed_pod.metadata.name }}"
         namespace: "{{ namespace }}"
-        labels:
-          pod_name: "{{ the_pod.metadata.name }}"
-          app: "{{ galera_app_name }}"
-          galera_cluster: "{{ galera_cluster_name }}"
+
+- name: "REMOVING PVC FOR GALERA NODE {{removed_pod.metadata.name}}"
+  k8s:
+    state: absent
+    definition:
+      kind: PersistentVolumeClaim
+      apiVersion: v1
+      metadata:
+        name: "{{ removed_pod.metadata.name + '-mysql-data' }}"
+        namespace: "{{ namespace }}"
+
+- name: "REMOVING CONFIGMAP FOR GALERA NODE {{removed_pod.metadata.name}}"
+  k8s:
+    state: absent
+    definition:
+      apiVersion: v1
+      kind: ConfigMap
+      metadata:
+        name: "{{ galera_configmap_name }}-{{removed_pod.metadata.name}}"
+        namespace: "{{ namespace }}"
+
+- name: "REMOVE SERVICE FOR GALERA NODE {{removed_pod.metadata.name}}"
+  k8s:
+    state: absent
+    definition:
+      apiVersion: v1
+      kind: Service
+      metadata:
+        name: "{{ removed_pod.metadata.name }}-service"
+        namespace: "{{ namespace }}"
 
