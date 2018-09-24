@@ -2,6 +2,8 @@ WIP, not ready for general consumption.
 
 # TODO
 
+1. Have pod 1 start up as primary only if no other nodes are up.
+   * Figure out if any nodes are up and set it as a fact
 1. Fix cleanup to remove all resources created for each pod.
 1. Enhance pods
    * Add readiness checks.

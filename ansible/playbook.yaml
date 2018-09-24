@@ -26,6 +26,10 @@
 
   # variables used when resizing the cluster
   - set_fact:
+      current_pod_count: "{{ pods_lookup|length }}"
+  - debug:
+      var: current_pod_count
+  - set_fact:
       cluster_size_changing: "{% if _p_galera_cluster_size|int != pods_lookup|length %}True{% else %}False{% endif %}"
   - debug:
       var: cluster_size_changing
@@ -37,6 +41,8 @@
   - include_tasks: create_node.yaml
     args:
       galera_node_name: "{{item}}"
+      # pod 1 should only bootstrap if the cluster is not already established
+      #do_bootstrap: "{% if item == galera_nodes[0] and current_pod_count|int == 0 %}True{% else %}False{% endif %}"
       do_bootstrap: "{% if item == galera_nodes[0] %}True{% else %}False{% endif %}"
     loop: "{{galera_nodes}}"
 

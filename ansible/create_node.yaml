@@ -95,7 +95,7 @@
           log-error=/var/log/mysqld.log
           pid-file=/var/run/mysqld/mysqld.pid
   register: configmap_result
-  when: not node_configmap_status
+  when: not node_configmap_status or cluster_size_changing|bool
 
 - name: "lookup ConfigMap for {{galera_node_name}}"
   set_fact:
@@ -223,4 +223,5 @@
     sleep: 1
     timeout: 300
   loop: [3306, 4567]
+  when: pod_result|changed
 
