@@ -53,3 +53,5 @@
 
   - include_tasks: cleanup_nodes.yaml
     when: removing_nodes
+
+  - include_tasks: deploy_haproxy.yaml
