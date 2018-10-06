@@ -4,7 +4,8 @@ WIP, not ready for general consumption.
 
 1. Add a finalizer:
    * Don't remove PVCs if a certain option is set
-1. Get rid of service-per-pod setup
+1. Load balancer
+   * Add ability to specify load balancer kind (HAproxy, or native LoadBalancer type) or to disable it
 1. Figure out if any nodes are up and set it as a fact
 1. Move pod creation to a StatefulSet
    * Start up bootstrap pod only if no nodes are running
@@ -16,6 +17,10 @@ WIP, not ready for general consumption.
 1. Make more things configurable:
    * PV size requested
    * my.cnf options?
+   * MySQL stuff:
+     1. setting root password
+     1. creating new user with permissions
+     1. creating database
 
 # BUGS
 
