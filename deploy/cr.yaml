@@ -1,7 +1,7 @@
 apiVersion: "galera.database.coreos.com/v1alpha1"
 kind: "GaleraService"
 metadata:
-  name: "example"
+  name: "galera-example"
 spec:
   galera_app_name: "galera-app"
   galera_cluster_name: "galera"
