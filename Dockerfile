@@ -1,4 +1,4 @@
 FROM ansible-operator
-COPY ansible/roles/ ${HOME}/roles/
-COPY ansible/*.yaml ${HOME}/
+
+COPY ansible/* ${HOME}/
 COPY watches.yaml ${HOME}/watches.yaml
