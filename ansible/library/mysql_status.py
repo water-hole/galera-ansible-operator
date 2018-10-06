@@ -98,7 +98,7 @@ def getstatus(cursor, status_name):
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            status=dict(default=None, required=True),
+            status=dict(default=None, type='list', required=True),
             login_user=dict(default=None),
             login_password=dict(default=None, no_log=True),
             login_host=dict(default="localhost"),
@@ -121,8 +121,6 @@ def main():
     db = 'mysql'
 
     mysqlstatus = module.params["status"]
-    if match('^[0-9a-z_\%]+$', mysqlstatus) is None:
-        module.fail_json(msg="invalid status name \"%s\"" % mysqlstatus)
     if not mysqldb_found:
         module.fail_json(msg="The MySQL-python module is required.")
     else:
@@ -146,12 +144,19 @@ def main():
         else:
             module.fail_json(msg="unable to find %s. Exception message: %s" % (config_file, to_native(e)))
 
-    mysqlstatus_res = getstatus(cursor, mysqlstatus)
-    if mysqlstatus_res is None:
-        module.fail_json(msg="Status not available \"%s\"" % (mysqlstatus,))
-    else:
-        mysqlstatus_res = [(x[0].lower(), typedvalue(x[1])) for x in mysqlstatus_res]
-        module.exit_json(msg="Status found", status=mysqlstatus_res, changed=False)
+    statuses = {}
+    for status in mysqlstatus:
+        if match('^[0-9a-z_\%]+$', status) is None:
+            module.fail_json(msg="invalid status name \"%s\"" % status)
+        mysqlstatus_res = getstatus(cursor, status)
+        if mysqlstatus_res is None:
+            statuses[status] = None
+        else:
+            mysqlstatus_res = [(x[0].lower(), typedvalue(x[1])) for x in mysqlstatus_res]
+            for res in mysqlstatus_res:
+                statuses[res[0]] = res[1]
+
+    module.exit_json(msg="Status found", status=statuses, changed=False)
 
 
 if __name__ == '__main__':

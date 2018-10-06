@@ -45,6 +45,7 @@
       #do_bootstrap: "{% if item == galera_nodes[0] and current_pod_count|int == 0 %}True{% else %}False{% endif %}"
       do_bootstrap: "{% if item == galera_nodes[0] %}True{% else %}False{% endif %}"
     loop: "{{galera_nodes}}"
+    when: _p_galera_cluster_size|int > current_pod_count|int
 
   - debug:
       msg: "CURRENT NODES: {{pods_lookup|length}}"
