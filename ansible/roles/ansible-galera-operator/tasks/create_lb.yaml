@@ -1,0 +1,9 @@
+- debug:
+    var: load_balancer_method
+
+#- name: "Fail if load_balancer_method is not an acceptable value"
+#  fail:
+#    when: "load_balancer_method not in ('haproxy', 'native')"
+
+- name: "Run the {{ load_balancer_method }} load balancer deployment"
+  include_tasks: "deploy_{{ load_balancer_method }}_lb.yaml"

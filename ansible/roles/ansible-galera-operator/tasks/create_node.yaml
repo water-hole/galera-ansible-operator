@@ -1,33 +1,6 @@
 - debug: 
     msg: "CREATING GALERA NODE {{galera_node_name}}"
 
-#- name: create the pod service name
-#  set_fact:
-#    pod_service_name: "{{ galera_node_name+'-service' }}"
-#
-#- block:
-#  - name: "lookup k8s service for {{galera_node_name}}"
-#    set_fact:
-#      node_service_status: "{{ q('k8s', api_version='v1', kind='Service', namespace=namespace, resource_name=pod_service_name)[0] }}"
-#  rescue:
-#  - name: set node_service_status to default on failure
-#    set_fact:
-#      node_service_status: []
-#
-#- name: "CREATE SERVICES FOR GALERA NODE {{galera_node_name}}"
-#  k8s:
-#    definition: "{{lookup('template', 'pod_service.tmpl')|from_yaml}}"
-#  when: not node_service_status
-#  register: service_result
-#
-#- name: "refresh node_service_status for {{galera_node_name}}"
-#  set_fact:
-#    node_service_status: "{{ q('k8s', api_version='v1', kind='Service', namespace=namespace, resource_name=pod_service_name)[0] }}"
-#  when: service_result|changed
-#
-#- debug:
-#    var: node_service_status
-
 - name: set pod configmap name
   set_fact:
     pod_configmap_name: "{{ galera_configmap_name + '-' + galera_node_name }}"
@@ -101,21 +74,22 @@
 - name: "lookup Pod for {{galera_node_name}}"
   set_fact:
     node_pod_status: "{{ q('k8s', api_version='v1', kind='Pod', namespace=namespace, resource_name=galera_node_name)[0] }}"
-  #until: node_pod_status.status is defined and node_pod_status.status.podIP is defined and node_pod_status.status.podIP not in ('', None)
-  #retries: 90
-  #delay: 1
+  #register: result
+  #until: result.ansible_facts.node_pod_status.status is defined and result.ansible_facts.node_pod_status.status.podIP is defined and result.ansible_facts.node_pod_status.status.podIP not in ('', None)
+  #retries: 30
+  #delay: 2
   when: pod_result|changed
 
 - debug:
     var: node_pod_status
 
-- name: Wait for mysqld and galera ports to be available before proceeding
-  wait_for:
-    #host: "{{node_service_status.spec.clusterIP}}"
-    host: "{{node_pod_status.status.podIP}}"
-    port: "{{item|int}}"
-    sleep: 1
-    timeout: 300
-  loop: [3306, 4567]
-  when: pod_result|changed
+#- name: Wait for mysqld and galera ports to be available before proceeding
+#  wait_for:
+#    #host: "{{node_service_status.spec.clusterIP}}"
+#    host: "{{node_pod_status.status.podIP}}"
+#    port: "{{item|int}}"
+#    sleep: 1
+#    timeout: 300
+#  loop: [3306, 4567]
+#  when: pod_result|changed
 

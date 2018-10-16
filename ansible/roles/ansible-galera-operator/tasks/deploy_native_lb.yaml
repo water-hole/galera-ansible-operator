@@ -1,0 +1,3 @@
+- name: "Create the native LoadBalancer for {{galera_app}}"
+  k8s:
+    definition: "{{lookup('template', 'lb_native.tmpl')|from_yaml}}"

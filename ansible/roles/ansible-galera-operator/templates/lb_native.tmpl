@@ -1,0 +1,15 @@
+kind: Service
+apiVersion: v1
+metadata:
+  name: galera-external-loadbalancer
+  namespace: "{{ namespace }}"
+  labels:
+    app: "{{ galera_app_name }}"
+    galera_cluster: "{{ galera_cluster_name }}"
+spec:
+  type: LoadBalancer
+  selector:
+    app: "{{ galera_app_name }}"
+  ports:
+  - port: {{ mariadb_external_port|int }}
+    targetPort: 3306

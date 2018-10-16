@@ -1,0 +1,6 @@
+- hosts: localhost
+  gather_facts: no
+  tasks:
+  - name: "Run the Galera operator role"
+    import_role:
+      name: ansible-galera-operator

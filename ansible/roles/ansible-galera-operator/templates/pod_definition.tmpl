@@ -13,9 +13,11 @@ spec:
       app: "{{ galera_app_name }}"
   limits:
   - default:
-      memory: 1Gi
+      cpu: 100
+      memory: 4Gi
     defaultRequest:
-      memory: 1Gi
+      memory: 4Gi
+      cpu: 100
   containers:
   - name: "{{ galera_node_name }}"
     image: "mariadb:{{ mariadb_version }}"
@@ -40,15 +42,13 @@ spec:
       mountPath: "/var/lib/mysql"
     - name: mysql-entrypoint-mount
       mountPath: "/usr/local/bin"
-    #readinessProbe:
-    #  exec:
-    #    command:
-    #    - ansible-playbook
-    #    - pod_ready.yaml
-    #  initialDelaySeconds: 30
-    #  periodSeconds: 10
-    #  timeoutSeconds: 30
-    #  failureThreshold: 30
+    readinessProbe:
+      tcpSocket:
+        port: 3306
+      initialDelaySeconds: 15
+      periodSeconds: 10
+      timeoutSeconds: 30
+      failureThreshold: 6
   volumes:
   - name: mysql-cnf-mount
     configMap:

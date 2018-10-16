@@ -14,8 +14,8 @@ spec:
     spec:
       containers:
         - name: galera-ansible-operator
-          image: galera-ansible-operator:latest
-          imagePullPolicy: Never
+          image: gcr.io/consummate-atom-218703/galera-ansible-operator:latest
+          imagePullPolicy: Always
           env:
             - name: WATCH_NAMESPACE
               valueFrom:

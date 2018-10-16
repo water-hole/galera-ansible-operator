@@ -23,7 +23,7 @@ data:
     fi
     "$@" --skip-networking --socket="/var/lib/mysql/mysql.sock" &
     pid="$!"
-    for i in {30..0}; do
+    for i in {60..0}; do
       if echo 'SELECT 1' | mysql -u root -S /var/lib/mysql/mysql.sock &> /dev/null; then
         break
       fi
@@ -35,7 +35,7 @@ data:
       exit 1
     fi
     mysql -u root -S /var/lib/mysql/mysql.sock <<-EOSQL
-      CREATE USER IF NOT EXISTS 'root'@'%' IDENTIFIED BY '' ;
+      CREATE USER IF NOT EXISTS 'root'@'%' IDENTIFIED BY '{{ mariadb_root_password }}' ;
       GRANT ALL ON *.* TO 'root'@'%' WITH GRANT OPTION ;
       FLUSH PRIVILEGES ;
     EOSQL
@@ -55,11 +55,12 @@ data:
     innodb_autoinc_lock_mode=2
     innodb_flush_log_at_trx_commit=0
     innodb_buffer_pool_size=122M
+    max_connections=200
+    max_connect_errors=1000000
     wsrep_on=ON
     wsrep_provider=/usr/lib/libgalera_smm.so
     wsrep_provider_options="gcache.size=300M; gcache.page_size=300M;"
     wsrep_cluster_name="{{galera_cluster_name}}"
-    #wsrep_cluster_address="gcomm://{{node_list|join(',')}}"
     wsrep_cluster_address="gcomm://{{pods_lookup|map(attribute='status.podIP')|join(',')}}"
     wsrep_node_name={{galera_node_name + '-service'}}
     wsrep_sst_method=rsync

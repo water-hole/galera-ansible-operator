@@ -5,8 +5,11 @@ metadata:
 spec:
   galera_app_name: "galera-app"
   galera_cluster_name: "galera"
-  galera_cluster_size: 3
+  galera_cluster_size: 1
   galera_configmap_name: "galera-configmap"
   mariadb_version: "10.3.9"
+  mariadb_root_password: ""
+  mariadb_external_port: 33066
   namespace: "default"
-  persistent_volume: "pv001"
+  persistent_volume: "pv0001"
+  load_balancer_method: "native" # alternatives: "haproxy", or nil

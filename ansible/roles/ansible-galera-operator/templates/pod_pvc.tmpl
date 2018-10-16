@@ -3,15 +3,11 @@ kind: PersistentVolumeClaim
 metadata:
   name: "{{ galera_node_name + '-mysql-data' }}"
   namespace: "{{ namespace }}"
-  labels:
-    pod_name: "{{ galera_node_name }}"
+  #labels:
+  #  pod_name: "{{ galera_node_name }}"
 spec:
   accessModes:
     - ReadWriteOnce
-  volumeMode: Filesystem
   resources:
     requests:
-      storage: 1Gi
-  selector:
-    matchLabels:
-      name: "{{ persistent_volume }}"
+      storage: 10Gi
