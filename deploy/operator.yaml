@@ -2,6 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: galera-ansible-operator
+  namespace: test
 spec:
   replicas: 1
   selector:
@@ -14,7 +15,7 @@ spec:
     spec:
       containers:
         - name: galera-ansible-operator
-          image: gcr.io/consummate-atom-218703/galera-ansible-operator:latest
+          image: docker-registry.default.svc:5000/test/galera-ansible-operator
           imagePullPolicy: Always
           env:
             - name: WATCH_NAMESPACE

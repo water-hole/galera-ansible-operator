@@ -21,10 +21,10 @@ data:
       mysql_install_db --datadir="$DATADIR" --rpm "${@:2}"
       echo 'Database initialized'
     fi
-    "$@" --skip-networking --socket="/var/lib/mysql/mysql.sock" &
+    "$@" --skip-networking --socket="/var/run/mysqld/mysql.sock" &
     pid="$!"
     for i in {60..0}; do
-      if echo 'SELECT 1' | mysql -u root -S /var/lib/mysql/mysql.sock &> /dev/null; then
+      if echo 'SELECT 1' | mysql -u root -S /var/run/mysqld/mysql.sock &> /dev/null; then
         break
       fi
       echo 'MySQL init process in progress...'
@@ -34,7 +34,7 @@ data:
       echo >&2 'MySQL init process failed.'
       exit 1
     fi
-    mysql -u root -S /var/lib/mysql/mysql.sock <<-EOSQL
+    mysql -u root -S /var/run/mysqld/mysql.sock <<-EOSQL
       CREATE USER IF NOT EXISTS 'root'@'%' IDENTIFIED BY '{{ mariadb_root_password }}' ;
       GRANT ALL ON *.* TO 'root'@'%' WITH GRANT OPTION ;
       FLUSH PRIVILEGES ;
@@ -47,7 +47,7 @@ data:
   mysql-cnf-general: |
     [mysqld]
     datadir=/var/lib/mysql
-    socket=/var/lib/mysql/mysql.sock
+    socket=/var/run/mysqld/mysql.sock
     user=mysql
     binlog_format=ROW
     bind-address=0.0.0.0

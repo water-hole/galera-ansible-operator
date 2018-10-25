@@ -10,6 +10,6 @@ spec:
   mariadb_version: "10.3.9"
   mariadb_root_password: ""
   mariadb_external_port: 33066
-  namespace: "default"
+  namespace: "test"
   persistent_volume: "pv0001"
   load_balancer_method: "native" # alternatives: "haproxy", or nil
