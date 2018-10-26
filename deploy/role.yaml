@@ -1,5 +1,5 @@
+---
 kind: ClusterRole
-#apiVersion: rbac.authorization.k8s.io/v1beta1
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
   name: galera-ansible-operator
@@ -32,19 +32,3 @@ rules:
   - statefulsets
   verbs:
   - "*"
-
----
-
-kind: ClusterRoleBinding
-#apiVersion: rbac.authorization.k8s.io/v1beta1
-apiVersion: rbac.authorization.k8s.io/v1
-metadata:
-  name: default-account-app-operator
-subjects:
-- kind: ServiceAccount
-  name: default
-  namespace: test
-roleRef:
-  kind: ClusterRole
-  name: galera-ansible-operator
-  apiGroup: rbac.authorization.k8s.io
