@@ -1,0 +1,8 @@
+- hosts: localhost
+  gather_facts: no
+  tasks:
+  - name: remove the cloudformation stack
+    cloudformation:
+      stack_name: "jimi-openshift"
+      state: "absent"
+      region: "us-east-2"

@@ -1,0 +1,6 @@
+- hosts: nodes
+  gather_facts: no
+  tasks:
+  - file:
+      state: directory
+      path: /data/pv0001

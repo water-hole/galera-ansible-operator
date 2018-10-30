@@ -1,0 +1,14 @@
+- hosts: masters
+  gather_facts: no
+  tasks:
+  - name: "install passlib, as the htpasswd module requires it"
+    yum:
+      name: python-passlib
+  - name: "Add admin credentials to the htpasswd file for the master(s)"
+    htpasswd:
+      path: /etc/origin/master/htpasswd
+      name: admin
+      password: "supersekret"
+  - name: "Set the admin user as a cluster admin"
+    command: oc create clusterrolebinding registry-controller --clusterrole=cluster-admin --user=admin
+    run_once: yes

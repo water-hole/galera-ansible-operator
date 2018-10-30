@@ -1,0 +1,23 @@
+[OSEv3:children]
+masters
+nodes
+etcd
+glusterfs
+
+[OSEv3:vars]
+ansible_ssh_user=centos
+ansible_become=true
+
+openshift_deployment_type=origin
+openshift_additional_repos=https://cbs.centos.org/repos/paas7-openshift-origin311-testing/x86_64/os
+openshift_additional_repos=[{'id': 'updated-origin-packages', 'name': 'updated-origin-packages', 'baseurl': 'https://cbs.centos.org/repos/paas7-openshift-origin311-testing/x86_64/os', 'enabled': 1, 'gpgcheck': 0, 'gpgkey': ''}]
+openshift_disable_check=memory_availability,disk_availability
+openshift_master_identity_providers=[{'name': 'htpasswd_auth', 'login': 'true', 'challenge': 'true', 'kind': 'HTPasswdPasswordIdentityProvider'}]
+
+openshift_storage_glusterfs_namespace=app-storage
+openshift_storage_glusterfs_storageclass=true
+openshift_storage_glusterfs_storageclass_default=true
+openshift_storage_glusterfs_block_deploy=true
+openshift_storage_glusterfs_block_host_vol_size=100
+openshift_storage_glusterfs_block_storageclass=true
+openshift_storage_glusterfs_block_storageclass_default=false

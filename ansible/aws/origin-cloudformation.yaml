@@ -1,0 +1,326 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Metadata: {}
+
+Parameters:
+###########
+  KeyName:
+    Description: The EC2 Key Pair to allow SSH access to the instance
+    Type: 'AWS::EC2::KeyPair::KeyName'
+  AvailabilityZone:
+    Description: Availability zone to deploy
+    Type: AWS::EC2::AvailabilityZone::Name
+
+Mappings:
+#########
+  RegionMap:
+    us-east-1:
+      CentOS7: "ami-ae7bfdb8"
+    us-east-2:
+      CentOS7: "ami-9cbf9bf9"
+
+Resources:
+##########
+  openshiftvpc:
+    Type: "AWS::EC2::VPC"
+    Properties:
+      CidrBlock: 10.0.0.0/24
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+      Tags:
+        - Key: Name
+          Value: openshift-cf-vpc
+
+  internetgatewayos:
+    Type: AWS::EC2::InternetGateway
+
+  gatewayattachment:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      InternetGatewayId: !Ref internetgatewayos
+      VpcId: !Ref openshiftvpc
+
+  subnet:
+    Type: 'AWS::EC2::Subnet'
+    Properties:
+      VpcId: !Ref openshiftvpc
+      CidrBlock: 10.0.0.0/24
+      AvailabilityZone: !Ref AvailabilityZone
+
+  routetable:
+    Type: 'AWS::EC2::RouteTable'
+    Properties:
+      VpcId: !Ref openshiftvpc
+
+  subnetroutetableasoc:
+    Type: "AWS::EC2::SubnetRouteTableAssociation"
+    Properties:
+     RouteTableId: !Ref routetable
+     SubnetId: !Ref subnet
+
+  route:
+    Type: "AWS::EC2::Route"
+    DependsOn:
+    - internetgatewayos
+    - gatewayattachment
+    Properties:
+      RouteTableId: !Ref routetable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref internetgatewayos
+
+  openshiftmaster:
+    Type: 'AWS::EC2::Instance'
+    Properties:
+      Tags:
+      - Key: Name
+        Value: openshift-master
+      - Key: Application
+        Value: '["masters", "etcd", "nodes"]'
+      InstanceType: m5.large
+      KeyName: !Ref KeyName
+      AvailabilityZone: !Ref AvailabilityZone
+      BlockDeviceMappings:
+      - DeviceName: "/dev/sda1"
+        Ebs:
+          VolumeType: "gp2"
+          DeleteOnTermination: "true"
+          VolumeSize: 200
+      NetworkInterfaces:
+      - AssociatePublicIpAddress: "true"
+        DeviceIndex: "0"
+        SubnetId: !Ref subnet
+        GroupSet:
+        - !Ref mastersecgroup
+      ImageId: "ami-9c0638f9"
+
+  openshifttester:
+    Type: 'AWS::EC2::Instance'
+    Properties:
+      Tags:
+      - Key: Name
+        Value: openshift-tester
+      InstanceType: m5.2xlarge
+      KeyName: !Ref KeyName
+      AvailabilityZone: !Ref AvailabilityZone
+      NetworkInterfaces:
+      - AssociatePublicIpAddress: "true"
+        DeviceIndex: "0"
+        SubnetId: !Ref subnet
+        GroupSet:
+        - !Ref mastersecgroup
+      ImageId: "ami-9c0638f9"
+
+  openshiftworker1:
+    Type: 'AWS::EC2::Instance'
+    Properties:
+      Tags:
+      - Key: Name
+        Value: openshift-worker1
+      - Key: Application
+        Value: '["nodes"]'
+      InstanceType: m5.large
+      KeyName: !Ref KeyName
+      AvailabilityZone: !Ref AvailabilityZone
+      NetworkInterfaces:
+        - AssociatePublicIpAddress: "true"
+          DeviceIndex: "0"
+          SubnetId: !Ref subnet
+          GroupSet:
+             - !Ref workersecgroup
+      ImageId: "ami-9c0638f9"
+
+  openshiftworker2:
+    Type: 'AWS::EC2::Instance'
+    Properties:
+      Tags:
+      - Key: Name
+        Value: openshift-worker2
+      - Key: Application
+        Value: '["nodes"]'
+      InstanceType: m5.large
+      KeyName: !Ref KeyName
+      AvailabilityZone: !Ref AvailabilityZone
+      NetworkInterfaces:
+        - AssociatePublicIpAddress: "true"
+          DeviceIndex: "0"
+          SubnetId: !Ref subnet
+          GroupSet:
+           - !Ref workersecgroup
+      ImageId: "ami-9c0638f9"
+
+  openshiftworker3:
+    Type: 'AWS::EC2::Instance'
+    Properties:
+      Tags:
+      - Key: Name
+        Value: openshift-worker3
+      - Key: Application
+        Value: '["nodes"]'
+      InstanceType: m5.large
+      KeyName: !Ref KeyName
+      AvailabilityZone: !Ref AvailabilityZone
+      NetworkInterfaces:
+        - AssociatePublicIpAddress: "true"
+          DeviceIndex: "0"
+          SubnetId: !Ref subnet
+          GroupSet:
+           - !Ref workersecgroup
+      ImageId: "ami-9c0638f9"
+
+  openshiftworker4:
+    Type: 'AWS::EC2::Instance'
+    Properties:
+      Tags:
+      - Key: Name
+        Value: openshift-worker4
+      - Key: Application
+        Value: '["nodes"]'
+      InstanceType: m5.large
+      KeyName: !Ref KeyName
+      AvailabilityZone: !Ref AvailabilityZone
+      NetworkInterfaces:
+        - AssociatePublicIpAddress: "true"
+          DeviceIndex: "0"
+          SubnetId: !Ref subnet
+          GroupSet:
+           - !Ref workersecgroup
+      ImageId: "ami-9c0638f9"
+
+  openshiftworker5:
+    Type: 'AWS::EC2::Instance'
+    Properties:
+      Tags:
+      - Key: Name
+        Value: openshift-worker5
+      - Key: Application
+        Value: '["nodes"]'
+      InstanceType: m5.large
+      KeyName: !Ref KeyName
+      AvailabilityZone: !Ref AvailabilityZone
+      NetworkInterfaces:
+        - AssociatePublicIpAddress: "true"
+          DeviceIndex: "0"
+          SubnetId: !Ref subnet
+          GroupSet:
+           - !Ref workersecgroup
+      ImageId: "ami-9c0638f9"
+
+  openshiftgluster1:
+    Type: 'AWS::EC2::Instance'
+    Properties:
+      Tags:
+      - Key: Name
+        Value: openshift-gluster1
+      - Key: Application
+        Value: '["glusterfs", "nodes"]'
+      InstanceType: t2.micro
+      KeyName: !Ref KeyName
+      AvailabilityZone: !Ref AvailabilityZone
+      BlockDeviceMappings:
+      - DeviceName: "/dev/sdb"
+        Ebs:
+          VolumeType: "gp2"
+          DeleteOnTermination: "true"
+          VolumeSize: 50 
+      NetworkInterfaces:
+        - AssociatePublicIpAddress: "true"
+          DeviceIndex: "0"
+          SubnetId: !Ref subnet
+          GroupSet:
+             - !Ref workersecgroup
+      ImageId: "ami-9c0638f9"
+
+  openshiftgluster2:
+    Type: 'AWS::EC2::Instance'
+    Properties:
+      Tags:
+      - Key: Name
+        Value: openshift-gluster2
+      - Key: Application
+        Value: '["glusterfs", "nodes"]'
+      InstanceType: t2.micro
+      KeyName: !Ref KeyName
+      AvailabilityZone: !Ref AvailabilityZone
+      BlockDeviceMappings:
+      - DeviceName: "/dev/sdb"
+        Ebs:
+          VolumeType: "gp2"
+          DeleteOnTermination: "true"
+          VolumeSize: 50
+      NetworkInterfaces:
+        - AssociatePublicIpAddress: "true"
+          DeviceIndex: "0"
+          SubnetId: !Ref subnet
+          GroupSet:
+             - !Ref workersecgroup
+      ImageId: "ami-9c0638f9"
+
+  openshiftgluster3:
+    Type: 'AWS::EC2::Instance'
+    Properties:
+      Tags:
+      - Key: Name
+        Value: openshift-gluster3
+      - Key: Application
+        Value: '["glusterfs", "nodes"]'
+      InstanceType: t2.micro
+      KeyName: !Ref KeyName
+      AvailabilityZone: !Ref AvailabilityZone
+      BlockDeviceMappings:
+      - DeviceName: "/dev/sdb"
+        Ebs:
+          VolumeType: "gp2"
+          DeleteOnTermination: "true"
+          VolumeSize: 50
+      NetworkInterfaces:
+        - AssociatePublicIpAddress: "true"
+          DeviceIndex: "0"
+          SubnetId: !Ref subnet
+          GroupSet:
+             - !Ref workersecgroup
+      ImageId: "ami-9c0638f9"
+
+  workersecgroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      VpcId: !Ref openshiftvpc
+      GroupDescription: Security group for the worker Kubernetes nodes
+      SecurityGroupIngress:
+      - IpProtocol: -1
+        FromPort: -1
+        ToPort: -1
+        CidrIp: 10.0.0.0/24
+      - IpProtocol: tcp
+        FromPort: '22'
+        ToPort: '22'
+        CidrIp: 0.0.0.0/0
+
+  mastersecgroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      VpcId: !Ref openshiftvpc
+      GroupDescription: Security group for the master Kubernetes node
+      SecurityGroupIngress:
+      - IpProtocol: -1
+        FromPort: -1
+        ToPort: -1
+        CidrIp: 10.0.0.0/24
+      - IpProtocol: tcp
+        FromPort: '22'
+        ToPort: '22'
+        CidrIp: 0.0.0.0/0
+      - IpProtocol: tcp
+        FromPort: '80'
+        ToPort: '80'
+        CidrIp: 0.0.0.0/0
+      - IpProtocol: tcp
+        FromPort: '443'
+        ToPort: '443'
+        CidrIp: 0.0.0.0/0
+      - IpProtocol: tcp
+        FromPort: '8443'
+        ToPort: '8443'
+        CidrIp: 0.0.0.0/0
+      - IpProtocol: tcp
+        FromPort: '10250'
+        ToPort: '10250'
+        CidrIp: 0.0.0.0/0

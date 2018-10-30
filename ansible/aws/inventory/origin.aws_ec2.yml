@@ -1,0 +1,13 @@
+plugin: aws_ec2
+regions:
+  - us-east-2
+filters:
+  tag:aws:cloudformation:stack-name: "jimi-openshift"
+strict: false
+keyed_groups:
+  - key: tags.Application
+    separator: ''
+    values: "tags.Application|split(',')|list"
+compose:
+  openshift_node_group_name: "'node-config-master-infra' if 'masters' in tags.Application else 'node-config-compute'"
+  glusterfs_devices: "['/dev/xvdb'] if 'glusterfs' in tags.Application else None"

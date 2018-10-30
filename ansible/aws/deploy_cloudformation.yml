@@ -1,0 +1,12 @@
+- hosts: localhost
+  gather_facts: no
+  tasks:
+  - name: create a cloudformation stack
+    cloudformation:
+      stack_name: "jimi-openshift"
+      state: "present"
+      region: "us-east-2"
+      template: "origin-cloudformation.yaml"
+      template_parameters:
+        KeyName: "jimi"
+        AvailabilityZone: "us-east-2a"

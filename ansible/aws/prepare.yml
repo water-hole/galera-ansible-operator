@@ -1,0 +1,16 @@
+---
+- hosts: nodes:glusterfs
+  gather_facts: no
+  remote_user: centos
+  become: true
+  tasks:
+    - name: 'install python2'
+      raw: sudo yum install -y python
+    - yum: 
+        name:
+        - PyYAML
+        - NetworkManager
+    - name: enable network-manager
+      shell: systemctl enable NetworkManager && systemctl start NetworkManager
+    - name: set hostname
+      command: "hostnamectl set-hostname {{inventory_hostname}}"
